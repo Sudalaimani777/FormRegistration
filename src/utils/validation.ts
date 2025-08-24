@@ -1,4 +1,4 @@
-import type { PasswordStrength, Gender } from '@/types/user';
+import type { PasswordStrength, Gender, PhoneRegion, PhoneRegionInfo } from '@/types/user';
 
 // Password validation constants
 const MIN_PASSWORD_LENGTH = 8;
@@ -13,11 +13,125 @@ const PASSWORD_REGEX = {
 const MIN_AGE = 13;
 const MAX_AGE = 120;
 
-// Phone number validation
+// Phone number validation - updated for region-based validation
 const PHONE_REGEX = /^[\+]?[1-9][\d]{0,15}$/;
 
 // Email validation
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+// Phone region configurations
+const PHONE_REGIONS: Record<PhoneRegion, PhoneRegionInfo> = {
+  india: {
+    code: '+91',
+    name: 'India',
+    flag: '🇮🇳',
+    format: 'XXXX XXX XXXX',
+    minLength: 10,
+    maxLength: 10,
+    pattern: /^[6-9]\d{9}$/,
+    example: '9876543210'
+  },
+  usa: {
+    code: '+1',
+    name: 'United States',
+    flag: '🇺🇸',
+    format: '(XXX) XXX-XXXX',
+    minLength: 10,
+    maxLength: 10,
+    pattern: /^[2-9]\d{9}$/,
+    example: '5551234567'
+  },
+  uk: {
+    code: '+44',
+    name: 'United Kingdom',
+    flag: '🇬🇧',
+    format: 'XXXX XXXXXX',
+    minLength: 10,
+    maxLength: 11,
+    pattern: /^[1-9]\d{9,10}$/,
+    example: '7912345678'
+  },
+  canada: {
+    code: '+1',
+    name: 'Canada',
+    flag: '🇨🇦',
+    format: '(XXX) XXX-XXXX',
+    minLength: 10,
+    maxLength: 10,
+    pattern: /^[2-9]\d{9}$/,
+    example: '4161234567'
+  },
+  australia: {
+    code: '+61',
+    name: 'Australia',
+    flag: '🇦🇺',
+    format: 'X XXXX XXXX',
+    minLength: 9,
+    maxLength: 9,
+    pattern: /^[2-9]\d{8}$/,
+    example: '412345678'
+  },
+  germany: {
+    code: '+49',
+    name: 'Germany',
+    flag: '🇩🇪',
+    format: 'XXX XXXXXXX',
+    minLength: 10,
+    maxLength: 12,
+    pattern: /^[1-9]\d{9,11}$/,
+    example: '30123456789'
+  },
+  france: {
+    code: '+33',
+    name: 'France',
+    flag: '🇫🇷',
+    format: 'X XX XX XX XX',
+    minLength: 9,
+    maxLength: 9,
+    pattern: /^[1-9]\d{8}$/,
+    example: '123456789'
+  },
+  japan: {
+    code: '+81',
+    name: 'Japan',
+    flag: '🇯🇵',
+    format: 'XX XXXX XXXX',
+    minLength: 10,
+    maxLength: 10,
+    pattern: /^[1-9]\d{9}$/,
+    example: '9012345678'
+  },
+  china: {
+    code: '+86',
+    name: 'China',
+    flag: '🇨🇳',
+    format: 'XXX XXXX XXXX',
+    minLength: 11,
+    maxLength: 11,
+    pattern: /^1[3-9]\d{9}$/,
+    example: '13812345678'
+  },
+  brazil: {
+    code: '+55',
+    name: 'Brazil',
+    flag: '🇧🇷',
+    format: '(XX) XXXXX-XXXX',
+    minLength: 10,
+    maxLength: 11,
+    pattern: /^[1-9]\d{9,10}$/,
+    example: '11987654321'
+  },
+  other: {
+    code: '+',
+    name: 'Other',
+    flag: '🌍',
+    format: 'Variable',
+    minLength: 7,
+    maxLength: 15,
+    pattern: /^[1-9]\d{6,14}$/,
+    example: '123456789'
+  }
+};
 
 export class ValidationService {
   // Full name validation
@@ -81,43 +195,200 @@ export class ValidationService {
     return { isValid: true };
   }
 
-  // Phone number validation
-  static validatePhoneNumber(phone: string): { isValid: boolean; error?: string } {
-    if (!phone || phone.trim().length === 0) {
-      return { isValid: false, error: 'Phone number is required' };
+  // Phone region validation
+  static validatePhoneRegion(region: PhoneRegion | string): { isValid: boolean; error?: string } {
+    const validRegions: PhoneRegion[] = ['india', 'usa', 'uk', 'canada', 'australia', 'germany', 'france', 'japan', 'china', 'brazil', 'other'];
+    
+    if (!region || region.trim().length === 0) {
+      return { isValid: false, error: 'Phone region selection is required' };
     }
     
-    // Remove all non-digit characters except + for international format
-    const cleanedPhone = phone.replace(/[^\d+]/g, '');
-    
-    if (cleanedPhone.length < 10) {
-      return { isValid: false, error: 'Phone number must be at least 10 digits long' };
-    }
-    
-    if (cleanedPhone.length > 16) {
-      return { isValid: false, error: 'Phone number cannot exceed 16 digits' };
-    }
-    
-    if (!PHONE_REGEX.test(cleanedPhone)) {
-      return { isValid: false, error: 'Please enter a valid phone number format' };
+    if (!validRegions.includes(region as PhoneRegion)) {
+      return { isValid: false, error: 'Please select a valid phone region' };
     }
     
     return { isValid: true };
   }
 
-  // Format phone number for display
-  static formatPhoneNumber(phone: string): string {
+  // Phone number validation
+  static validatePhoneNumber(phone: string, region: PhoneRegion = 'india'): { isValid: boolean; error?: string } {
+    if (!phone || phone.trim().length === 0) {
+      return { isValid: false, error: 'Phone number is required' };
+    }
+    
+    const regionInfo = PHONE_REGIONS[region];
+    
+    // Clean the phone number and handle country codes properly
+    let cleanedPhone = phone.replace(/[^\d+]/g, '');
+    let phoneWithoutCode = cleanedPhone;
+    
+    // Handle different country code formats
+    const countryCode = regionInfo.code.replace('+', '');
+    
+    // Check if the phone starts with the country code
+    if (cleanedPhone.startsWith(countryCode)) {
+      phoneWithoutCode = cleanedPhone.slice(countryCode.length);
+    }
+    // Also check if it starts with + followed by country code
+    else if (cleanedPhone.startsWith('+' + countryCode)) {
+      phoneWithoutCode = cleanedPhone.slice(1 + countryCode.length);
+    }
+    
+    // Additional validation for India: ensure the number starts with valid digits
+    if (region === 'india' && phoneWithoutCode.length === 10) {
+      const firstDigit = parseInt(phoneWithoutCode.charAt(0));
+      if (firstDigit < 6 || firstDigit > 9) {
+        return { isValid: false, error: 'Indian mobile numbers must start with 6, 7, 8, or 9' };
+      }
+    }
+    
+    if (phoneWithoutCode.length < regionInfo.minLength) {
+      return { isValid: false, error: `Phone number must be at least ${regionInfo.minLength} digits long for ${regionInfo.name}` };
+    }
+    
+    if (phoneWithoutCode.length > regionInfo.maxLength) {
+      return { isValid: false, error: `Phone number cannot exceed ${regionInfo.maxLength} digits for ${regionInfo.name}` };
+    }
+    
+    if (!regionInfo.pattern.test(phoneWithoutCode)) {
+      return { isValid: false, error: `Please enter a valid ${regionInfo.name} phone number format` };
+    }
+    
+    return { isValid: true };
+  }
+
+  // Get all available phone regions
+  static getPhoneRegions(): Record<PhoneRegion, PhoneRegionInfo> {
+    return PHONE_REGIONS;
+  }
+
+  // Get specific region info
+  static getPhoneRegionInfo(region: PhoneRegion): PhoneRegionInfo {
+    return PHONE_REGIONS[region];
+  }
+
+  // Format phone number based on region
+  static formatPhoneNumber(phone: string, region: PhoneRegion = 'india'): string {
+    const regionInfo = PHONE_REGIONS[region];
     const cleaned = phone.replace(/\D/g, '');
     
-    if (cleaned.length === 10) {
-      return `(${cleaned.slice(0, 3)}) ${cleaned.slice(3, 6)}-${cleaned.slice(6)}`;
+    // Remove country code if present - use the same logic as validation
+    let phoneWithoutCode = cleaned;
+    const countryCode = regionInfo.code.replace('+', '');
+    
+    // Check if the phone starts with the country code
+    if (cleaned.startsWith(countryCode)) {
+      phoneWithoutCode = cleaned.slice(countryCode.length);
+    }
+    // Also check if it starts with + followed by country code
+    else if (cleaned.startsWith('+' + countryCode)) {
+      phoneWithoutCode = cleaned.slice(1 + countryCode.length);
     }
     
-    if (cleaned.length === 11 && cleaned.startsWith('1')) {
-      return `+1 (${cleaned.slice(1, 4)}) ${cleaned.slice(4, 7)}-${cleaned.slice(7)}`;
+    switch (region) {
+      case 'india':
+        if (phoneWithoutCode.length === 10) {
+          return `${regionInfo.code} ${phoneWithoutCode.slice(0, 5)} ${phoneWithoutCode.slice(5)}`;
+        }
+        break;
+        
+      case 'usa':
+      case 'canada':
+        if (phoneWithoutCode.length === 10) {
+          return `${regionInfo.code} (${phoneWithoutCode.slice(0, 3)}) ${phoneWithoutCode.slice(3, 6)}-${phoneWithoutCode.slice(6)}`;
+        }
+        break;
+        
+      case 'uk':
+        if (phoneWithoutCode.length === 10) {
+          return `${regionInfo.code} ${phoneWithoutCode.slice(0, 4)} ${phoneWithoutCode.slice(4)}`;
+        } else if (phoneWithoutCode.length === 11) {
+          return `${regionInfo.code} ${phoneWithoutCode.slice(0, 4)} ${phoneWithoutCode.slice(4)}`;
+        }
+        break;
+        
+      case 'australia':
+        if (phoneWithoutCode.length === 9) {
+          return `${regionInfo.code} ${phoneWithoutCode.slice(0, 1)} ${phoneWithoutCode.slice(1, 5)} ${phoneWithoutCode.slice(5)}`;
+        }
+        break;
+        
+      case 'germany':
+        if (phoneWithoutCode.length === 10) {
+          return `${regionInfo.code} ${phoneWithoutCode.slice(0, 3)} ${phoneWithoutCode.slice(3)}`;
+        } else if (phoneWithoutCode.length === 11) {
+          return `${regionInfo.code} ${phoneWithoutCode.slice(0, 3)} ${phoneWithoutCode.slice(3)}`;
+        }
+        break;
+        
+      case 'france':
+        if (phoneWithoutCode.length === 9) {
+          return `${regionInfo.code} ${phoneWithoutCode.slice(0, 1)} ${phoneWithoutCode.slice(1, 3)} ${phoneWithoutCode.slice(3, 5)} ${phoneWithoutCode.slice(5, 7)} ${phoneWithoutCode.slice(7)}`;
+        }
+        break;
+        
+      case 'japan':
+        if (phoneWithoutCode.length === 10) {
+          return `${regionInfo.code} ${phoneWithoutCode.slice(0, 2)} ${phoneWithoutCode.slice(2, 6)} ${phoneWithoutCode.slice(6)}`;
+        }
+        break;
+        
+      case 'china':
+        if (phoneWithoutCode.length === 11) {
+          return `${regionInfo.code} ${phoneWithoutCode.slice(0, 3)} ${phoneWithoutCode.slice(3, 7)} ${phoneWithoutCode.slice(7)}`;
+        }
+        break;
+        
+      case 'brazil':
+        if (phoneWithoutCode.length === 10) {
+          return `${regionInfo.code} (${phoneWithoutCode.slice(0, 2)}) ${phoneWithoutCode.slice(2, 7)}-${phoneWithoutCode.slice(7)}`;
+        } else if (phoneWithoutCode.length === 11) {
+          return `${regionInfo.code} (${phoneWithoutCode.slice(0, 2)}) ${phoneWithoutCode.slice(2, 7)}-${phoneWithoutCode.slice(7)}`;
+        }
+        break;
+        
+      default:
+        // For other regions, use a generic format
+        if (phoneWithoutCode.length >= 7 && phoneWithoutCode.length <= 15) {
+          return `${regionInfo.code} ${phoneWithoutCode}`;
+        }
     }
     
+    // Return original if no specific formatting applies
     return phone;
+  }
+
+  // Detect phone number region automatically
+  static detectPhoneRegion(phone: string): PhoneRegion | null {
+    const cleaned = phone.replace(/\D/g, '');
+    
+    // Check for country codes
+    if (cleaned.startsWith('91')) return 'india';
+    if (cleaned.startsWith('1')) return 'usa'; // Could be USA or Canada
+    if (cleaned.startsWith('44')) return 'uk';
+    if (cleaned.startsWith('61')) return 'australia';
+    if (cleaned.startsWith('49')) return 'germany';
+    if (cleaned.startsWith('33')) return 'france';
+    if (cleaned.startsWith('81')) return 'japan';
+    if (cleaned.startsWith('86')) return 'china';
+    if (cleaned.startsWith('55')) return 'brazil';
+    
+    // Check length patterns for common regions
+    if (cleaned.length === 10) {
+      // Could be India, USA, Canada, etc.
+      if (cleaned.startsWith('6') || cleaned.startsWith('7') || cleaned.startsWith('8') || cleaned.startsWith('9')) {
+        return 'india';
+      }
+      return 'usa';
+    }
+    
+    return null;
+  }
+
+  // Get formatted example for a region
+  static getPhoneExample(region: PhoneRegion): string {
+    const regionInfo = PHONE_REGIONS[region];
+    return this.formatPhoneNumber(regionInfo.example, region);
   }
 
   // Email validation
@@ -273,7 +544,7 @@ export class ValidationService {
       errors.gender = genderValidation.error!;
     }
     
-    const phoneValidation = this.validatePhoneNumber(formData.phoneNumber);
+    const phoneValidation = this.validatePhoneNumber(formData.phoneNumber, formData.region || 'india');
     if (!phoneValidation.isValid) {
       errors.phoneNumber = phoneValidation.error!;
     }

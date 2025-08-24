@@ -194,7 +194,10 @@
               <template v-slot:item.phoneNumber="{ item }">
                 <div class="d-flex align-center">
                   <v-icon size="small" class="mr-2" color="info">mdi-phone</v-icon>
-                  {{ formatPhoneNumber(item.phoneNumber) }}
+                  <div>
+                    <div>{{ formatPhoneNumber(item.phoneNumber, getSafeRegion(item.region)) }}</div>
+                    <div class="text-caption text-grey">{{ getRegionDisplayName(item.region) }}</div>
+                  </div>
                 </div>
               </template>
 
@@ -278,7 +281,12 @@
                     
                     <v-list-item prepend-icon="mdi-phone" color="success">
                       <v-list-item-title>Phone</v-list-item-title>
-                      <v-list-item-subtitle>{{ formatPhoneNumber(selectedUser.phoneNumber) }}</v-list-item-subtitle>
+                      <v-list-item-subtitle>
+                        {{ formatPhoneNumber(selectedUser.phoneNumber, getSafeRegion(selectedUser.region)) }}
+                        <div class="text-caption text-grey mt-1">
+                          {{ getRegionDisplayName(selectedUser.region) }}
+                        </div>
+                      </v-list-item-subtitle>
                     </v-list-item>
                   </v-list>
                 </v-col>
@@ -401,8 +409,9 @@
 import { ref, computed, onMounted } from 'vue';
 import { useUserStore } from '@/stores/userStore';
 import UserRegistrationForm from './UserRegistrationForm.vue';
-import type { UserProfile, Gender } from '@/types/user';
+import type { UserProfile, Gender, PhoneRegion } from '@/types/user';
 import { useDisplay } from 'vuetify';
+import { ValidationService } from '@/utils/validation';
 
 // Store
 const userStore = useUserStore();
@@ -544,12 +553,31 @@ const formatGender = (gender: Gender): string => {
   return labels[gender];
 };
 
-const formatPhoneNumber = (phone: string): string => {
-  const cleaned = phone.replace(/\D/g, '');
-  if (cleaned.length === 10) {
-    return `(${cleaned.slice(0, 3)}) ${cleaned.slice(3, 6)}-${cleaned.slice(6)}`;
+const formatPhoneNumber = (phone: string, region: PhoneRegion | null | undefined): string => {
+  if (!region) return phone;
+  return ValidationService.formatPhoneNumber(phone, region);
+};
+
+const getRegionDisplayName = (region: PhoneRegion | null | undefined): string => {
+  if (!region) return 'Unknown Region';
+  const regionInfo = ValidationService.getPhoneRegionInfo(region);
+  return `${regionInfo.flag} ${regionInfo.name}`;
+};
+
+const getSafeRegion = (region: PhoneRegion | null | undefined): PhoneRegion => {
+  // If region is undefined, null, or empty string, default to 'india'
+  if (!region || region === '') {
+    return 'india';
   }
-  return phone;
+  
+  // Validate that the region is a valid PhoneRegion
+  const validRegions: PhoneRegion[] = ['india', 'usa', 'uk', 'canada', 'australia', 'germany', 'france', 'japan', 'china', 'brazil', 'other'];
+  if (validRegions.includes(region)) {
+    return region;
+  }
+  
+  // Fallback to 'india' if region is invalid
+  return 'india';
 };
 
 const formatDate = (date: Date): string => {

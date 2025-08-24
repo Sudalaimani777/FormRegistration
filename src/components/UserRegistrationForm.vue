@@ -98,11 +98,28 @@
                   <v-expansion-panel-text class="form-section-content">
                     <v-row>
                       <v-col cols="12" sm="6">
+                        <v-select
+                          v-model="formData.region"
+                          :density="fieldDensity"
+                          label="Phone Region *"
+                          :items="phoneRegionOptions"
+                          :rules="[rules.required]"
+                          :error-messages="errors.region"
+                          @blur="validateField('region')"
+                          @update:model-value="onRegionChange"
+                          prepend-inner-icon="mdi-earth"
+                          variant="outlined"
+                          clearable
+                          class="form-field region-selector"
+                        />
+                      </v-col>
+                      
+                      <v-col cols="12" sm="6">
                         <v-text-field
                           v-model="formData.phoneNumber"
                           :density="fieldDensity"
                           label="Phone Number *"
-                          placeholder="Enter your phone number"
+                          :placeholder="phoneNumberPlaceholder"
                           :rules="[rules.required, rules.phoneNumber]"
                           :error-messages="errors.phoneNumber"
                           @blur="validateField('phoneNumber')"
@@ -112,9 +129,23 @@
                           clearable
                           class="form-field"
                         />
+                        <div v-if="selectedRegionInfo" class="phone-format-info">
+                          <div class="d-flex align-center">
+                            <span class="region-flag">{{ selectedRegionInfo.flag }}</span>
+                            <span class="text-caption">
+                              <strong>Format:</strong> {{ selectedRegionInfo.format }} | 
+                              <strong>Example:</strong> {{ selectedRegionInfo.example }}
+                            </span>
+                          </div>
+                          <div v-if="selectedRegionInfo.name === 'India'" class="text-caption text-grey mt-2">
+                            💡 <strong>Tip:</strong> You can enter with or without +91. The system will automatically format it.
+                          </div>
+                        </div>
                       </v-col>
-                      
-                      <v-col cols="12" sm="6">
+                    </v-row>
+                    
+                    <v-row>
+                      <v-col cols="12">
                         <v-text-field
                           v-model="formData.email"
                           :density="fieldDensity"
@@ -277,7 +308,7 @@
 import { ref, reactive, onMounted, watch, computed } from 'vue';
 import { useUserStore } from '@/stores/userStore';
 import { ValidationService } from '@/utils/validation';
-import type { UserProfile, Gender, PasswordStrength } from '@/types/user';
+import type { UserProfile, Gender, PasswordStrength, PhoneRegion, PhoneRegionInfo } from '@/types/user';
 import { useDisplay } from 'vuetify';
 
 // Props
@@ -320,6 +351,7 @@ const formData = reactive({
   fullName: '',
   age: '',
   gender: '' as Gender | '',
+  region: 'india' as PhoneRegion,
   phoneNumber: '',
   email: '',
   password: '',
@@ -331,6 +363,7 @@ const errors = reactive({
   fullName: '',
   age: '',
   gender: '',
+  region: '',
   phoneNumber: '',
   email: '',
   password: '',
@@ -350,6 +383,30 @@ const genderOptions = [
   { title: 'Prefer not to say', value: 'prefer-not-to-say' },
   { title: 'Other', value: 'other' }
 ];
+
+// Phone region options
+const phoneRegionOptions = computed(() => {
+  const regions = ValidationService.getPhoneRegions();
+  return Object.entries(regions).map(([key, region]) => ({
+    title: `${region.flag} ${region.name} (${region.code})`,
+    value: key as PhoneRegion
+  }));
+});
+
+// Computed properties
+const selectedRegionInfo = computed(() => {
+  return ValidationService.getPhoneRegionInfo(formData.region);
+});
+
+const phoneNumberPlaceholder = computed(() => {
+  if (selectedRegionInfo.value) {
+    if (selectedRegionInfo.value.name === 'India') {
+      return 'Enter 10-digit mobile number (e.g., 9876543210)';
+    }
+    return `Enter ${selectedRegionInfo.value.name} phone number`;
+  }
+  return 'Enter your phone number';
+});
 
 // Validation rules
 const rules = {
@@ -400,11 +457,16 @@ const validateField = (fieldName: keyof typeof errors) => {
       errors.gender = genderValidation.isValid ? '' : genderValidation.error || '';
       break;
     }
-    case 'phoneNumber': {
-      const phoneValidation = ValidationService.validatePhoneNumber(fieldValue);
-      errors.phoneNumber = phoneValidation.isValid ? '' : phoneValidation.error || '';
+    case 'region': {
+      const regionValidation = ValidationService.validatePhoneRegion(fieldValue);
+      errors.region = regionValidation.isValid ? '' : regionValidation.error || '';
       break;
     }
+          case 'phoneNumber': {
+        const phoneValidation = ValidationService.validatePhoneNumber(fieldValue, formData.region);
+        errors.phoneNumber = phoneValidation.isValid ? '' : phoneValidation.error || '';
+        break;
+      }
     case 'email': {
       const emailValidation = ValidationService.validateEmail(fieldValue);
       errors.email = emailValidation.isValid ? '' : emailValidation.error || '';
@@ -434,8 +496,15 @@ const validatePassword = () => {
 
 const formatPhoneNumber = () => {
   if (formData.phoneNumber) {
-    formData.phoneNumber = ValidationService.formatPhoneNumber(formData.phoneNumber);
+    // Clean the input first to remove extra spaces and format consistently
+    const cleaned = formData.phoneNumber.replace(/\s+/g, ' ').trim();
+    formData.phoneNumber = ValidationService.formatPhoneNumber(cleaned, formData.region);
   }
+};
+
+const onRegionChange = (value: PhoneRegion) => {
+  formData.region = value;
+  validateField('region');
 };
 
 const getPasswordStrengthColor = (): string => {
@@ -457,7 +526,11 @@ const showMessage = (message: string, color: string = 'success') => {
 
 const resetForm = () => {
   Object.keys(formData).forEach(key => {
-    (formData as any)[key] = '';
+    if (key === 'region') {
+      (formData as any)[key] = 'india';
+    } else {
+      (formData as any)[key] = '';
+    }
   });
   
   Object.keys(errors).forEach(key => {
@@ -498,6 +571,7 @@ const handleSubmit = async () => {
       fullName: formData.fullName.trim(),
       age: parseInt(formData.age as string, 10),
       gender: formData.gender as Gender,
+      region: formData.region,
       phoneNumber: formData.phoneNumber.trim(),
       email: formData.email.trim().toLowerCase(),
       password: formData.password,
@@ -528,6 +602,7 @@ const handleSubmit = async () => {
 watch(() => formData.fullName, () => errors.fullName = '');
 watch(() => formData.age, () => errors.age = '');
 watch(() => formData.gender, () => errors.gender = '');
+watch(() => formData.region, () => errors.region = '');
 watch(() => formData.phoneNumber, () => errors.phoneNumber = '');
 watch(() => formData.email, () => errors.email = '');
 watch(() => formData.password, () => errors.password = '');
@@ -538,6 +613,7 @@ onMounted(() => {
     formData.fullName = props.user.fullName;
     formData.age = props.user.age.toString();
     formData.gender = props.user.gender;
+    formData.region = props.user.region || 'india';
     formData.phoneNumber = props.user.phoneNumber;
     formData.email = props.user.email;
     formData.password = props.user.password;
@@ -1010,5 +1086,52 @@ onMounted(() => {
   .form-field :deep(.v-field) {
     min-height: 48px;
   }
+}
+
+/* Region Selector Styling */
+.v-select.region-selector :deep(.v-field) {
+  border-radius: 12px;
+  transition: all 0.3s ease;
+}
+
+.v-select.region-selector :deep(.v-field:hover) {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Phone Number Format Display */
+.phone-format-info {
+  background: rgba(102, 126, 234, 0.05);
+  border-radius: 8px;
+  padding: 8px 12px;
+  margin-top: 8px;
+  border-left: 3px solid #667eea;
+  transition: all 0.3s ease;
+}
+
+.phone-format-info:hover {
+  background: rgba(102, 126, 234, 0.08);
+  transform: translateX(2px);
+}
+
+.phone-format-info .v-icon {
+  margin-right: 6px;
+  font-size: 14px;
+}
+
+/* Enhanced Region Display */
+.region-flag {
+  font-size: 16px;
+  margin-right: 8px;
+}
+
+.region-name {
+  font-weight: 500;
+  color: #2c3e50;
+}
+
+.region-code {
+  color: #667eea;
+  font-weight: 600;
+  margin-left: 4px;
 }
 </style>

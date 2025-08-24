@@ -34,6 +34,8 @@ export const useUserStore = defineStore('user', () => {
         const parsedUsers = JSON.parse(storedUsers);
         users.value = parsedUsers.map((user: any) => ({
           ...user,
+          // Ensure backward compatibility for region field
+          region: user.region || 'india',
           createdAt: new Date(user.createdAt),
           updatedAt: new Date(user.updatedAt)
         }));
