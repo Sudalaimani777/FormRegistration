@@ -325,20 +325,36 @@
         </v-dialog>
 
         <!-- Edit User Dialog -->
-        <v-dialog v-model="showEditDialog" max-width="800" persistent>
-          <v-card>
-            <v-card-title class="text-h5 primary--text pa-6">
-              <v-icon size="32" class="mr-3">mdi-account-edit</v-icon>
-              Edit User Profile
+        <v-dialog v-model="showEditDialog" :max-width="smAndDown ? '95%' : '900'" persistent>
+          <v-card class="edit-dialog-card">
+            <v-card-title class="text-h5 primary--text pa-6 edit-dialog-header">
+              <div class="d-flex align-center">
+                <v-icon size="32" class="mr-3">mdi-account-edit</v-icon>
+                <div>
+                  <div class="text-h5 font-weight-bold">Edit User Profile</div>
+                  <div class="text-subtitle-2 text-medium-emphasis mt-1">
+                    Update user information and settings
+                  </div>
+                </div>
+              </div>
+              <v-btn
+                icon="mdi-close"
+                variant="text"
+                size="small"
+                @click="closeEditDialog"
+                class="close-btn"
+              />
             </v-card-title>
             
-            <v-card-text class="pa-6">
-              <UserRegistrationForm
-                :user="userToEdit"
-                :is-editing="true"
-                @user-updated="handleUserUpdated"
-                @form-reset="closeEditDialog"
-              />
+            <v-card-text class="pa-0">
+              <div class="edit-form-container">
+                <UserRegistrationForm
+                  :user="userToEdit"
+                  :is-editing="true"
+                  @user-updated="handleUserUpdated"
+                  @form-reset="closeEditDialog"
+                />
+              </div>
             </v-card-text>
           </v-card>
         </v-dialog>
@@ -798,5 +814,153 @@ onMounted(() => {
 
 .users-table :deep(.v-data-table__wrapper)::-webkit-scrollbar-thumb:hover {
   background: #a8a8a8;
+}
+
+/* Edit Dialog Styles */
+.edit-dialog-card {
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.edit-dialog-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.edit-dialog-header::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="50" cy="50" r="1" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+  opacity: 0.3;
+}
+
+.edit-dialog-header .close-btn {
+  color: white;
+  transition: all 0.3s ease;
+}
+
+.edit-dialog-header .close-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  transform: scale(1.1);
+}
+
+.edit-form-container {
+  max-height: 70vh;
+  overflow-y: auto;
+  padding: 24px;
+}
+
+.edit-form-container::-webkit-scrollbar {
+  width: 8px;
+}
+
+.edit-form-container::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.edit-form-container::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+}
+
+.edit-form-container::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* Responsive Dialog */
+@media (max-width: 600px) {
+  .edit-dialog-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+  }
+  
+  .edit-dialog-header .close-btn {
+    align-self: flex-end;
+  }
+  
+  .edit-form-container {
+    padding: 16px;
+    max-height: 80vh;
+  }
+}
+
+/* Enhanced Mobile Responsiveness */
+@media (max-width: 480px) {
+  .edit-dialog-header .pa-6 {
+    padding: 20px 16px !important;
+  }
+  
+  .edit-dialog-header .text-h5 {
+    font-size: 1.25rem !important;
+  }
+  
+  .edit-dialog-header .text-subtitle-2 {
+    font-size: 0.875rem !important;
+  }
+  
+  .edit-form-container {
+    padding: 12px;
+    max-height: 85vh;
+  }
+}
+
+/* Better Dialog Animation */
+.edit-dialog-card {
+  animation: dialogSlideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes dialogSlideIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* Improved Dialog Header Layout */
+.edit-dialog-header {
+  position: relative;
+  z-index: 1;
+}
+
+.edit-dialog-header > div {
+  position: relative;
+  z-index: 2;
+}
+
+.edit-dialog-header .close-btn {
+  position: relative;
+  z-index: 2;
+}
+
+/* Better Form Container Scrolling */
+.edit-form-container {
+  scrollbar-width: thin;
+  scrollbar-color: #c1c1c1 #f1f1f1;
+}
+
+/* Enhanced Close Button */
+.edit-dialog-header .close-btn {
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+}
+
+.edit-dialog-header .close-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: scale(1.1) rotate(90deg);
 }
 </style>

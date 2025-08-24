@@ -1,13 +1,13 @@
 <template>
   <v-container fluid class="pa-4">
     <v-row justify="center">
-      <v-col cols="12" md="10" lg="8" xl="6">
+      <v-col cols="12" sm="11" md="10" lg="9" xl="8">
         <!-- Header Section -->
         <v-card class="mb-6 gradient-header elevation-12" rounded="xl">
           <v-card-text class="pa-8 text-center">
-            <div class="d-flex align-center justify-center mb-4">
-              <v-icon size="64" color="white" class="mr-4">mdi-account-plus</v-icon>
-              <div>
+            <div class="d-flex align-center justify-center mb-4 flex-column flex-sm-row">
+              <v-icon size="64" color="white" class="mr-0 mr-sm-4 mb-4 mb-sm-0">mdi-account-plus</v-icon>
+              <div class="text-center text-sm-left">
                 <h1 class="text-h3 font-weight-bold white--text mb-2">
                   {{ isEditing ? 'Edit User Profile' : 'User Registration' }}
                 </h1>
@@ -24,13 +24,15 @@
           <v-card-text class="pa-6">
             <v-form ref="form" v-model="isFormValid" @submit.prevent="handleSubmit">
               <!-- Personal Information Section -->
-              <v-expansion-panels v-model="activePanel" multiple>
-                <v-expansion-panel>
-                  <v-expansion-panel-title>
-                    <v-icon class="mr-3" color="primary">mdi-account-circle</v-icon>
-                    Personal Information
+              <v-expansion-panels v-model="activePanel" multiple class="form-sections">
+                <v-expansion-panel class="form-section-panel" :class="{ 'editing-mode': isEditing }">
+                  <v-expansion-panel-title class="form-section-title">
+                    <div class="d-flex align-center">
+                      <v-icon class="mr-3" color="primary">mdi-account-circle</v-icon>
+                      <span class="font-weight-bold">Personal Information</span>
+                    </div>
                   </v-expansion-panel-title>
-                  <v-expansion-panel-text>
+                  <v-expansion-panel-text class="form-section-content">
                     <v-row>
                       <v-col cols="12">
                         <v-text-field
@@ -44,10 +46,11 @@
                           prepend-inner-icon="mdi-account"
                           variant="outlined"
                           clearable
+                          class="form-field"
                         />
                       </v-col>
                       
-                      <v-col cols="12" md="6">
+                      <v-col cols="12" sm="6">
                         <v-text-field
                           v-model.number="formData.age"
                           :density="fieldDensity"
@@ -61,10 +64,11 @@
                           variant="outlined"
                           min="13"
                           max="120"
+                          class="form-field"
                         />
                       </v-col>
                       
-                      <v-col cols="12" md="6">
+                      <v-col cols="12" sm="6">
                         <v-select
                           v-model="formData.gender"
                           :density="fieldDensity"
@@ -76,6 +80,7 @@
                           prepend-inner-icon="mdi-gender-male-female"
                           variant="outlined"
                           clearable
+                          class="form-field"
                         />
                       </v-col>
                     </v-row>
@@ -83,14 +88,16 @@
                 </v-expansion-panel>
 
                 <!-- Contact Information Section -->
-                <v-expansion-panel>
-                  <v-expansion-panel-title>
-                    <v-icon class="mr-3" color="info">mdi-phone-message</v-icon>
-                    Contact Information
+                <v-expansion-panel class="form-section-panel" :class="{ 'editing-mode': isEditing }">
+                  <v-expansion-panel-title class="form-section-title">
+                    <div class="d-flex align-center">
+                      <v-icon class="mr-3" color="info">mdi-phone-message</v-icon>
+                      <span class="font-weight-bold">Contact Information</span>
+                    </div>
                   </v-expansion-panel-title>
-                  <v-expansion-panel-text>
+                  <v-expansion-panel-text class="form-section-content">
                     <v-row>
-                      <v-col cols="12" md="6">
+                      <v-col cols="12" sm="6">
                         <v-text-field
                           v-model="formData.phoneNumber"
                           :density="fieldDensity"
@@ -103,10 +110,11 @@
                           prepend-inner-icon="mdi-phone"
                           variant="outlined"
                           clearable
+                          class="form-field"
                         />
                       </v-col>
                       
-                      <v-col cols="12" md="6">
+                      <v-col cols="12" sm="6">
                         <v-text-field
                           v-model="formData.email"
                           :density="fieldDensity"
@@ -119,6 +127,7 @@
                           prepend-inner-icon="mdi-email"
                           variant="outlined"
                           clearable
+                          class="form-field"
                         />
                       </v-col>
                     </v-row>
@@ -126,14 +135,16 @@
                 </v-expansion-panel>
 
                 <!-- Security Section -->
-                <v-expansion-panel>
-                  <v-expansion-panel-title>
-                    <v-icon class="mr-3" color="warning">mdi-shield-lock</v-icon>
-                    Security
+                <v-expansion-panel class="form-section-panel" :class="{ 'editing-mode': isEditing }">
+                  <v-expansion-panel-title class="form-section-title">
+                    <div class="d-flex align-center">
+                      <v-icon class="mr-3" color="warning">mdi-shield-lock</v-icon>
+                      <span class="font-weight-bold">Security</span>
+                    </div>
                   </v-expansion-panel-title>
-                  <v-expansion-panel-text>
+                  <v-expansion-panel-text class="form-section-content">
                     <v-row>
-                      <v-col cols="12" md="6">
+                      <v-col cols="12" sm="6">
                         <v-text-field
                           v-model="formData.password"
                           :density="fieldDensity"
@@ -149,10 +160,11 @@
                           clearable
                           :append-inner-icon="showPassword ? 'mdi-eye-off' : 'mdi-eye'"
                           @click:append-inner="showPassword = !showPassword"
+                          class="form-field"
                         />
                         
                         <!-- Password Strength Indicator -->
-                        <v-card v-if="passwordStrength" class="mt-2 pa-3" :color="getPasswordStrengthColor()">
+                        <v-card v-if="passwordStrength" class="mt-2 pa-3 password-strength-card" :color="getPasswordStrengthColor()">
                           <v-card-text class="pa-2">
                             <div class="d-flex align-center mb-2">
                               <v-icon :color="getPasswordStrengthColor()" class="mr-2">mdi-shield-check</v-icon>
@@ -177,7 +189,7 @@
                         </v-card>
                       </v-col>
                       
-                      <v-col cols="12" md="6">
+                      <v-col cols="12" sm="6">
                         <v-text-field
                           v-model="formData.confirmPassword"
                           :density="fieldDensity"
@@ -192,6 +204,7 @@
                           clearable
                           :append-inner-icon="showConfirmPassword ? 'mdi-eye-off' : 'mdi-eye'"
                           @click:append-inner="showConfirmPassword = !showConfirmPassword"
+                          class="form-field"
                         />
                       </v-col>
                     </v-row>
@@ -209,6 +222,7 @@
                       @click="resetForm"
                       :disabled="isLoading"
                       prepend-icon="mdi-refresh"
+                      class="action-btn"
                     >
                       Reset Form
                     </v-btn>
@@ -220,6 +234,7 @@
                       :disabled="!isFormValid || isLoading"
                       prepend-icon="mdi-account-plus"
                       size="large"
+                      class="action-btn primary-action"
                     >
                       {{ isEditing ? 'Update Profile' : 'Create Account' }}
                     </v-btn>
@@ -720,5 +735,280 @@ onMounted(() => {
 .v-expansion-panel:hover .v-expansion-panel-title .v-icon {
   transform: scale(1.1);
   color: #667eea;
+}
+
+/* Enhanced Form Sections */
+.form-sections {
+  margin-bottom: 24px;
+}
+
+.form-section-panel {
+  margin-bottom: 16px;
+  border-radius: 16px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+}
+
+.form-section-panel:hover {
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12);
+  transform: translateY(-4px);
+  border-color: rgba(102, 126, 234, 0.2);
+}
+
+.form-section-title {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  padding: 20px 24px;
+  font-weight: 600;
+  color: #2c3e50;
+  transition: all 0.3s ease;
+}
+
+.form-section-panel:hover .form-section-title {
+  background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+}
+
+.form-section-content {
+  padding: 32px;
+  background: #ffffff;
+}
+
+.form-field {
+  margin-bottom: 20px;
+  transition: all 0.3s ease;
+}
+
+.form-field:hover {
+  transform: translateY(-2px);
+}
+
+.form-field :deep(.v-field) {
+  border-radius: 12px;
+  transition: all 0.3s ease;
+}
+
+.form-field :deep(.v-field:hover) {
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+}
+
+/* Password Strength Card */
+.password-strength-card {
+  border-radius: 12px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+}
+
+.password-strength-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+/* Enhanced Action Buttons */
+.action-btn {
+  border-radius: 12px;
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: 0.5px;
+  padding: 14px 32px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  min-width: 140px;
+}
+
+.action-btn:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18);
+}
+
+.action-btn:active {
+  transform: translateY(-2px);
+}
+
+.primary-action {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+}
+
+.primary-action:hover {
+  background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+}
+
+/* Enhanced Actions Container */
+.actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  margin: 32px -24px -24px -24px;
+  padding: 28px 24px;
+  border-radius: 0 0 16px 16px;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+/* Responsive Design Improvements */
+@media (max-width: 960px) {
+  .form-section-content {
+    padding: 24px;
+  }
+  
+  .actions {
+    padding: 24px;
+  }
+}
+
+@media (max-width: 600px) {
+  .form-section-content {
+    padding: 20px 16px;
+  }
+  
+  .form-section-title {
+    padding: 16px 20px;
+  }
+  
+  .action-btn {
+    width: 100%;
+    margin-bottom: 12px;
+    padding: 16px 24px;
+    min-width: auto;
+  }
+  
+  .actions {
+    margin: 24px -16px -16px -16px;
+    padding: 20px 16px;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+  }
+  
+  .v-expansion-panels {
+    margin-bottom: 16px;
+  }
+  
+  .form-section-panel {
+    margin-bottom: 12px;
+  }
+}
+
+/* Editing Mode Enhancements */
+.form-section-panel.editing-mode {
+  border-color: rgba(102, 126, 234, 0.3);
+  background: rgba(102, 126, 234, 0.02);
+}
+
+.form-section-panel.editing-mode .form-section-title {
+  background: linear-gradient(135deg, #e8f4fd 0%, #d1ecf1 100%);
+  color: #2c3e50;
+}
+
+/* Focus States */
+.form-field :deep(.v-field--focused) {
+  box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+}
+
+/* Loading States */
+.form-field :deep(.v-field--loading) {
+  opacity: 0.7;
+}
+
+/* Error States Enhancement */
+.form-field :deep(.v-field--error) {
+  border-color: #f44336;
+  box-shadow: 0 0 0 2px rgba(244, 67, 54, 0.1);
+}
+
+/* Success States */
+.form-field :deep(.v-field--success) {
+  border-color: #4caf50;
+  box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.1);
+}
+
+/* Additional Responsive Improvements */
+@media (max-width: 480px) {
+  .gradient-header .pa-8 {
+    padding: 24px 16px !important;
+  }
+  
+  .gradient-header .text-h3 {
+    font-size: 1.75rem !important;
+  }
+  
+  .gradient-header .text-h6 {
+    font-size: 0.875rem !important;
+  }
+  
+  .gradient-header .v-icon {
+    font-size: 48px !important;
+  }
+  
+  .form-section-content {
+    padding: 16px 12px;
+  }
+  
+  .form-section-title {
+    padding: 16px 20px;
+  }
+  
+  .actions {
+    margin: 20px -12px -12px -12px;
+    padding: 16px 12px;
+  }
+}
+
+/* Form Field Spacing Improvements */
+.form-field + .form-field {
+  margin-top: 16px;
+}
+
+/* Smooth Transitions for All Interactive Elements */
+.v-expansion-panel-title,
+.v-expansion-panel-text,
+.v-text-field,
+.v-select,
+.v-btn {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Better Visual Hierarchy for Editing Mode */
+.form-section-panel.editing-mode .form-section-title {
+  border-bottom: 2px solid rgba(102, 126, 234, 0.2);
+}
+
+/* Improved Button States */
+.action-btn:disabled {
+  opacity: 0.6;
+  transform: none;
+  box-shadow: none;
+}
+
+.action-btn:disabled:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+/* Enhanced Form Validation Visual Feedback */
+.form-field :deep(.v-field--error) .v-field__outline {
+  border-color: #f44336;
+}
+
+.form-field :deep(.v-field--success) .v-field__outline {
+  border-color: #4caf50;
+}
+
+/* Better Mobile Touch Targets */
+@media (max-width: 600px) {
+  .v-btn {
+    min-height: 48px;
+  }
+  
+  .v-expansion-panel-title {
+    min-height: 56px;
+  }
+  
+  .form-field :deep(.v-field) {
+    min-height: 48px;
+  }
 }
 </style>
