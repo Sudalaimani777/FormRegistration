@@ -14,7 +14,7 @@ const MIN_AGE = 13;
 const MAX_AGE = 120;
 
 // Phone number validation - updated for region-based validation
-const PHONE_REGEX = /^[\+]?[1-9][\d]{0,15}$/;
+// const PHONE_REGEX = /^[\+]?[1-9][\d]{0,15}$/;
 
 // Email validation
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
