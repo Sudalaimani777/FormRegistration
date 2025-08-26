@@ -308,7 +308,7 @@
 import { ref, reactive, onMounted, watch, computed } from 'vue';
 import { useUserStore } from '@/stores/userStore';
 import { ValidationService } from '@/utils/validation';
-import type { UserProfile, Gender, PasswordStrength, PhoneRegion, PhoneRegionInfo } from '@/types/user';
+import type { UserProfile, Gender, PasswordStrength, PhoneRegion} from '@/types/user';
 import { useDisplay } from 'vuetify';
 
 // Props
